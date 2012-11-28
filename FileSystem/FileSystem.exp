@@ -1,0 +1,7 @@
+#define __MODULE_NAME "FileSystem.exp"
+#include "_export.h"
+#define EXPORT_MODULE_ID 0
+#define MODULE_START O_Cstart
+#define EXPORT_NUMBER_START 0
+EXPORT_BEGIN
+EXPORT_END

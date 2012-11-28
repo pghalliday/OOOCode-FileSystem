@@ -1,0 +1,12 @@
+[submodule "FileSystem/submodules/OOOCode"]
+	path = FileSystem/submodules/OOOCode
+	url = https://github.com/pghalliday/OOOCode.git
+[submodule "FileSystem/submodules/UnitTest"]
+	path = FileSystem/submodules/UnitTest
+	url = https://github.com/pghalliday/OOOCode-UnitTest.git
+[submodule "FileSystem/submodules/Error"]
+	path = FileSystem/submodules/Error
+	url = https://github.com/pghalliday/OOOCode-Error.git
+[submodule "FileSystem/submodules/Log"]
+	path = FileSystem/submodules/Log
+	url = https://github.com/pghalliday/OOOCode-Log.git
