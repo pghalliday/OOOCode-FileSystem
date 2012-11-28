@@ -91,7 +91,10 @@ OOOMethod(void, created, OOOIError * iError)
 	}
 	else
 	{
-		OOOCheck(iError == NULL);
+		if (!OOOCheck(iError == NULL))
+		{
+			O_debug("Error: %s\n", OOOICall(iError, toString));
+		}
 		OOOCheck(isDirectory(OOOF(szPath)));
 	}
 	OOOF(bChecked) = TRUE;
@@ -109,7 +112,10 @@ OOOMethod(void, removed, OOOIError * iError)
 	}
 	else
 	{
-		OOOCheck(iError == NULL);
+		if (!OOOCheck(iError == NULL))
+		{
+			O_debug("Error: %s\n", OOOICall(iError, toString));
+		}
 		OOOCheck(!isDirectory(OOOF(szPath)));
 	}
 	OOOF(bChecked) = TRUE;
@@ -200,7 +206,10 @@ OOOMethod(void, written, OOOIError * iError)
 	}
 	else
 	{
-		OOOCheck(iError == NULL);
+		if (!OOOCheck(iError == NULL))
+		{
+			O_debug("Error: %s\n", OOOICall(iError, toString));
+		}
 
 		/* TODO: check the contents of the written file */
 	}
@@ -231,7 +240,10 @@ OOOMethod(void, read, OOOIError * iError, unsigned char * pData, size_t uSize)
 	}
 	else
 	{
-		OOOCheck(iError == NULL);
+		if (!OOOCheck(iError == NULL))
+		{
+			O_debug("Error: %s\n", OOOICall(iError, toString));
+		}
 	}
 	OOOF(bChecked) = TRUE;
 }
@@ -248,7 +260,10 @@ OOOMethod(void, removed, OOOIError * iError)
 	}
 	else
 	{
-		OOOCheck(iError == NULL);
+		if (!OOOCheck(iError == NULL))
+		{
+			O_debug("Error: %s\n", OOOICall(iError, toString));
+		}
 
 		/* TODO: check that the file was removed */
 	}
@@ -345,10 +360,10 @@ OOOTest(OOOFileSystem)
 	removeDirectory(pFileSystem, TEST_DIRECTORY1, NULL);
 
 	/* Read should error if there is no such file */
-	readFile(pFileSystem, TEST_FILE, "No such file", NULL, 0);
+	readFile(pFileSystem, TEST_FILE, "No such file: " TEST_FILE, NULL, 0);
 
 	/* Write should error if the data can not be written */
-	writeFile(pFileSystem, TEST_FILE, "Write failure", NULL, 0);
+	writeFile(pFileSystem, TEST_FILE, "Write failure: " TEST_FILE, NULL, 0);
 
 	/* TODO: Write should write an empty file to the file system */
 	writeFile(pFileSystem, TEST_FILE, NULL, NULL, 0);

@@ -3,40 +3,99 @@
 #include "limits.h"
 
 #define OOOClass RecursiveDirectoryCreateData
-OOODeclarePrivate(char * szPath, OOOIDirectoryCreateData * iDirectoryCreateData)
+OOODeclarePrivate(OOOFileSystem * pFileSystem, OOOIDirectoryCreateData * iDirectoryCreateData)
 	OOOImplements
 		OOOImplement(OOOIDirectoryCreateData)
 	OOOImplementsEnd
 	OOOExports
+		OOOExport(void, create)
 	OOOExportsEnd
 OOODeclareEnd
 
 OOOPrivateData
+	OOOFileSystem * pFileSystem;
 	char * szPath;
+	char * szParentPath;
 	OOOIDirectoryCreateData * iDirectoryCreateData;
 OOOPrivateDataEnd
 
 OOODestructor
 {
-	O_free(OOOF(szPath));
+	O_free(OOOF(szParentPath));
 }
 OOODestructorEnd
 
 OOOMethod(char *, getPath)
 {
-	return OOOF(szPath);
+	return OOOF(szParentPath);
+}
+OOOMethodEnd
+
+OOOMethod(void, createLast)
+{
+	if (O_dir_create(OOOF(szPath), OTV_WORLD_READ_WRITE_PERMISSION, UINT_MAX) == SUCCESS)
+	{
+		OOOICall(OOOF(iDirectoryCreateData), created, NULL);
+	}
+	else
+	{
+		OOOError * pError = OOOConstruct(OOOError, "O_dir_create failed: %s", OOOF(szPath));
+		OOOICall(OOOF(iDirectoryCreateData), created, OOOCast(OOOIError, pError));
+		OOODestroy(pError);
+	}
+	OOODestroy(OOOThis);
 }
 OOOMethodEnd
 
 OOOMethod(void, created, OOOIError * iError)
 {
-	OOOICall(OOOF(iDirectoryCreateData), created, iError);
-	OOODestroy(OOOThis);
+	if (iError)
+	{
+		OOOICall(OOOF(iDirectoryCreateData), created, iError);
+		OOODestroy(OOOThis);
+	}
+	else
+	{
+		OOOC(createLast);
+	}
 }
 OOOMethodEnd
 
-OOOConstructorPrivate(char * szPath, OOOIDirectoryCreateData * iDirectoryCreateData)
+OOOMethod(void, create)
 {
+	o_stat tStat;
+	if (O_file_get_stat(OOOF(szPath), &tStat) == SUCCESS)
+	{
+		if (tStat.permissions & OTV_DIRECTORY_FLAG != OTV_DIRECTORY_FLAG)
+		{
+			OOOError * pError = OOOConstruct(OOOError, "Path exists and is not a directory: %s", OOOF(szPath));
+			OOOICall(OOOF(iDirectoryCreateData), created, OOOCast(OOOIError, pError));
+			OOODestroy(pError);
+		}
+		else
+		{
+			OOOICall(OOOF(iDirectoryCreateData), created, NULL);
+		}
+		OOODestroy(OOOThis);
+	}
+	else
+	{
+		if (O_strlen(OOOF(szParentPath)) > 0)
+		{
+			OOOICall(OOOCast(OOOIFileSystem, OOOF(pFileSystem)), createDirectory, OOOCast(OOOIDirectoryCreateData, OOOThis));
+		}
+		else
+		{
+			OOOC(createLast);
+		}
+	}
+}
+OOOMethodEnd
+
+OOOConstructorPrivate(OOOFileSystem * pFileSystem, OOOIDirectoryCreateData * iDirectoryCreateData)
+{
+	char * szLastPath;
+
 #define OOOInterface OOOIDirectoryCreateData
 	OOOMapVirtuals
 		OOOMapVirtual(getPath)
@@ -47,7 +106,11 @@ OOOConstructorPrivate(char * szPath, OOOIDirectoryCreateData * iDirectoryCreateD
 	OOOMapMethods
 	OOOMapMethodsEnd
 
-	OOOF(szPath) = szPath;
+	OOOF(pFileSystem) = pFileSystem;
+	OOOF(szPath) = OOOICall(iDirectoryCreateData, getPath);
+	szLastPath = O_strrchr(OOOF(szPath), '/');
+	OOOF(szParentPath) = O_calloc(szLastPath - OOOF(szPath) + 1, sizeof(char));
+	O_strncpy(OOOF(szParentPath), OOOF(szPath), szLastPath - OOOF(szPath));
 	OOOF(iDirectoryCreateData) = iDirectoryCreateData;
 }
 OOOConstructorEnd
@@ -205,46 +268,8 @@ OOODestructorEnd
 
 OOOMethod(void, createDirectory, OOOIDirectoryCreateData * iDirectoryCreateData)
 {
-	char * szPath = OOOICall(iDirectoryCreateData, getPath);
-	o_stat tStat;
-	if (O_file_get_stat(szPath, &tStat) == SUCCESS)
-	{
-		if (tStat.permissions & OTV_DIRECTORY_FLAG != OTV_DIRECTORY_FLAG)
-		{
-			OOOError * pError = OOOConstruct(OOOError, "Path exists and is not a directory: %s", szPath);
-			OOOICall(iDirectoryCreateData, created, OOOCast(OOOIError, pError));
-			OOODestroy(pError);
-		}
-		else
-		{
-			OOOICall(iDirectoryCreateData, created, NULL);
-		}
-	}
-	else
-	{
-		char * szLastPath = O_strrchr(szPath, '/');
-		char * szParentPath = O_calloc(szLastPath - szPath + 1, sizeof(char));
-		O_strncpy(szParentPath, szPath, szLastPath - szPath);
-		if (O_strlen(szParentPath) > 0)
-		{
-			RecursiveDirectoryCreateData * pDirectoryData = OOOConstruct(RecursiveDirectoryCreateData, szParentPath, iDirectoryCreateData);
-			OOOC(createDirectory, OOOCast(OOOIDirectoryCreateData, pDirectoryData));
-		}
-		else
-		{
-			O_free(szParentPath);
-			if (O_dir_create(szPath, OTV_WORLD_READ_WRITE_PERMISSION, UINT_MAX) == SUCCESS)
-			{
-				OOOICall(iDirectoryCreateData, created, NULL);
-			}
-			else
-			{
-				OOOError * pError = OOOConstruct(OOOError, "O_dir_create failed: %s", szPath);
-				OOOICall(iDirectoryCreateData, created, OOOCast(OOOIError, pError));
-				OOODestroy(pError);
-			}
-		}
-	}
+	RecursiveDirectoryCreateData * pDirectoryData = OOOConstruct(RecursiveDirectoryCreateData, OOOThis, iDirectoryCreateData);
+	OOOPCCall(RecursiveDirectoryCreateData, pDirectoryData, create);
 }
 OOOMethodEnd
 
