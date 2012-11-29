@@ -297,7 +297,14 @@ OOOMethod(void, removed, OOOIError * iError)
 			OOOError(OOOICall(iError, toString));
 		}
 
-		/* TODO: check that the file was removed */
+		/* check that the file was removed */
+		{
+			o_file hFile = O_file_open(OOOF(szPath), OTV_O_RDONLY, OTV_O_NO_CREATION_MODE, 0);
+			if (!OOOCheck(hFile == FAILURE))
+			{
+				O_fh_close(hFile);
+			}
+		}
 	}
 	OOOF(bChecked) = TRUE;
 }
@@ -378,6 +385,14 @@ static void writeFile(OOOFileSystem * pFileSystem, char * szPath, char * szError
 	OOODestroy(pTestFileData);
 }
 
+static void removeFile(OOOFileSystem * pFileSystem, char * szPath, char * szError)
+{
+	TestFileData * pTestFileData = OOOConstruct(TestFileData, szError, szPath, NULL, 0);
+	OOOICall(OOOCast(OOOIFileSystem, pFileSystem), removeFile, OOOCast(OOOIFileRemoveData, pTestFileData));
+	OOOCheck(OOOCall(pTestFileData, wasChecked));
+	OOODestroy(pTestFileData);
+}
+
 OOOTest(OOOFileSystem)
 {
 	OOOFileSystem * pFileSystem = OOOConstruct(OOOFileSystem);
@@ -390,6 +405,9 @@ OOOTest(OOOFileSystem)
 
 	/* Should recursively delete a directory */
 	removeDirectory(pFileSystem, TEST_DIRECTORY1, NULL);
+
+	/* Remove should fail if there is no such file */
+	removeFile(pFileSystem, TEST_FILE, "O_file_remove failed: " TEST_FILE);
 
 	/* Read should error if there is no such file */
 	readFile(pFileSystem, TEST_FILE, "O_file_open failed: " TEST_FILE, NULL, 0);
@@ -409,9 +427,10 @@ OOOTest(OOOFileSystem)
 	/* Read should read a non-empty file from the file system */
 	readFile(pFileSystem, TEST_FILE, NULL, "Hello, World!", O_strlen("Hello, World!") + 1);
 
+	/* Remove should remove a file from the file system */
+	removeFile(pFileSystem, TEST_FILE, NULL);
 
-	/* TODO: test remove file and lots of other read and write conditions */
-	/* TODO: test directory create and remove error conditions */
+	/* TODO: test more error conditions */
 
 	OOODestroy(pFileSystem);
 }

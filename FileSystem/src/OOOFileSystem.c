@@ -502,65 +502,74 @@ OOOMethodEnd
 OOOMethod(void, readFile, OOOIFileReadData * iFileReadData)
 {
 	char * szPath = OOOICall(iFileReadData, getPath);
-	o_file hFile = O_file_open(szPath, OTV_O_RDONLY, OTV_O_NO_CREATION_MODE, 0);
-	if (hFile == FAILURE)
+	if (szPath && szPath[0] == '/')
 	{
-		OOOError * pError = OOOConstruct(OOOError, "O_file_open failed: %s", szPath);
-		OOOICall(iFileReadData, read, OOOCast(OOOIError, pError), NULL, 0);
-		OOODestroy(pError);
-	}
-	else
-	{
-		ssize_t nSize = O_fh_get_length(hFile);
-		if (nSize == FAILURE)
+		o_file hFile = O_file_open(szPath, OTV_O_RDONLY, OTV_O_NO_CREATION_MODE, 0);
+		if (hFile == FAILURE)
 		{
-			OOOError * pError = OOOConstruct(OOOError, "O_fh_get_length failed: %s", szPath);
-			O_fh_close(hFile);
+			OOOError * pError = OOOConstruct(OOOError, "O_file_open failed: %s", szPath);
 			OOOICall(iFileReadData, read, OOOCast(OOOIError, pError), NULL, 0);
 			OOODestroy(pError);
 		}
 		else
 		{
-			if (nSize > 0)
+			ssize_t nSize = O_fh_get_length(hFile);
+			if (nSize == FAILURE)
 			{
-				unsigned char * pData = O_calloc(nSize, sizeof(unsigned char));
-				nSize = O_fh_read(hFile, pData, nSize);
-				if (nSize == FAILURE)
+				OOOError * pError = OOOConstruct(OOOError, "O_fh_get_length failed: %s", szPath);
+				O_fh_close(hFile);
+				OOOICall(iFileReadData, read, OOOCast(OOOIError, pError), NULL, 0);
+				OOODestroy(pError);
+			}
+			else
+			{
+				if (nSize > 0)
 				{
-					OOOError * pError = OOOConstruct(OOOError, "O_fh_read failed: %s", szPath);
-					O_fh_close(hFile);
-					OOOICall(iFileReadData, read, OOOCast(OOOIError, pError), NULL, 0);
-					OOODestroy(pError);
+					unsigned char * pData = O_calloc(nSize, sizeof(unsigned char));
+					nSize = O_fh_read(hFile, pData, nSize);
+					if (nSize == FAILURE)
+					{
+						OOOError * pError = OOOConstruct(OOOError, "O_fh_read failed: %s", szPath);
+						O_fh_close(hFile);
+						OOOICall(iFileReadData, read, OOOCast(OOOIError, pError), NULL, 0);
+						OOODestroy(pError);
+					}
+					else
+					{
+						if (O_fh_close(hFile) == FAILURE)
+						{
+							OOOError * pError = OOOConstruct(OOOError, "O_fh_close failed: %s", szPath);
+							OOOICall(iFileReadData, read, OOOCast(OOOIError, pError), pData, nSize);
+							OOODestroy(pError);
+						}
+						else
+						{
+							OOOICall(iFileReadData, read, NULL, pData, nSize);
+						}
+					}
+					O_free(pData);
 				}
 				else
 				{
 					if (O_fh_close(hFile) == FAILURE)
 					{
 						OOOError * pError = OOOConstruct(OOOError, "O_fh_close failed: %s", szPath);
-						OOOICall(iFileReadData, read, OOOCast(OOOIError, pError), pData, nSize);
+						OOOICall(iFileReadData, read, OOOCast(OOOIError, pError), NULL, 0);
 						OOODestroy(pError);
 					}
 					else
 					{
-						OOOICall(iFileReadData, read, NULL, pData, nSize);
+						OOOICall(iFileReadData, read, NULL, NULL, 0);
 					}
-				}
-				O_free(pData);
-			}
-			else
-			{
-				if (O_fh_close(hFile) == FAILURE)
-				{
-					OOOError * pError = OOOConstruct(OOOError, "O_fh_close failed: %s", szPath);
-					OOOICall(iFileReadData, read, OOOCast(OOOIError, pError), NULL, 0);
-					OOODestroy(pError);
-				}
-				else
-				{
-					OOOICall(iFileReadData, read, NULL, NULL, 0);
 				}
 			}
 		}
+	}
+	else
+	{
+		OOOError * pError = OOOConstruct(OOOError, "Path is not an absolute path: %s", szPath);
+		OOOICall(iFileReadData, read, OOOCast(OOOIError, pError), NULL, 0);
+		OOODestroy(pError);
 	}
 }
 OOOMethodEnd
@@ -568,9 +577,25 @@ OOOMethodEnd
 OOOMethod(void, removeFile, OOOIFileRemoveData * iFileRemoveData)
 {
 	char * szPath = OOOICall(iFileRemoveData, getPath);
-	OOOError * pError = OOOConstruct(OOOError, "No such file: %s", szPath);
-	OOOICall(iFileRemoveData, removed, OOOCast(OOOIError, pError));
-	OOODestroy(pError);
+	if (szPath && szPath[0] == '/')
+	{
+		if (O_file_remove(szPath) == SUCCESS)
+		{
+			OOOICall(iFileRemoveData, removed, NULL);
+		}
+		else
+		{
+			OOOError * pError = OOOConstruct(OOOError, "O_file_remove failed: %s", szPath);
+			OOOICall(iFileRemoveData, removed, OOOCast(OOOIError, pError));
+			OOODestroy(pError);
+		}
+	}
+	else
+	{
+		OOOError * pError = OOOConstruct(OOOError, "Path is not an absolute path: %s", szPath);
+		OOOICall(iFileRemoveData, removed, OOOCast(OOOIError, pError));
+		OOODestroy(pError);
+	}
 }
 OOOMethodEnd
 

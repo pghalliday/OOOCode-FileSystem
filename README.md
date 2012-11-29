@@ -5,22 +5,22 @@ OOOCode FileSystem interfaces and classes for working with files and directories
 
 ## OOOPath
 
-- Nothing yet
+- Should be possible to construct from a fully qualified path string
+- Should be possible to construct from an existing OOOPath instance and a relative path string
+- Should be possible to construct from a relative path string and generate a path relative to the current directory
+- Should expose the fully qualified path as a string
 
 ### Roadmap
 
-- Should be possible to construct from a fully qualified path string
-- Should be possible to construct from an existing OOOPath instance and a relative path string
-- Should expose the parent directory as an OOOPath instance
-- Should expose the fully qualified path as a string
+- Nothing yet
 
 ## OOOIFileSystem interface
 
-- Should support reading files asynchronously
-- Should support writing files asynchronously
-- Should support removing files asynchronously
 - Should support creating directories asynchronously
 - Should support removing directories asynchronously
+- Should support writing files asynchronously
+- Should support reading files asynchronously
+- Should support removing files asynchronously
 
 ### Roadmap
 
@@ -30,16 +30,21 @@ OOOCode FileSystem interfaces and classes for working with files and directories
 
 A simple file system implementation exposing the STB filesystem
 
-### Roadmap
-
 - Should implement the OOOIFileSystem interface
 - Should create parent directories on file creation
 - Should create parent directories on directory creation
 - Should recursively remove directories
+- Should only support absolute paths
+
+### Roadmap
+
+- Nothing yet
 
 ## Roadmap
 
 - Should implement an OOOCheckedFileSystem that will append CRCs to files so that they can be checked for corruption
+- Should expose directory listings
+- Should allow checks for file or dircetory existance
 
 ## API
 
@@ -49,19 +54,22 @@ A simple file system implementation exposing the STB filesystem
 #include "OOOPath.h"
 
 OOOPath * pPath = OOOConstruct(OOOPath, NULL, "/this/is/a/path");
+OOOPath * pAnotherPath = OOOConstruct(OOOPath, pPath, "as/well");
+OOOPath * pRelativePath = OOOConstruct(OOOPath, NULL, "relative");
 
 /* szPath will contain "/this/is/a/path" */
-char * szPath = OOOCall(pPath, toString);
-
-/* szParentDirectory will contain "/this/is/a" */
-char * szParentDirectory = OOOCall(pPath, getParentDirectory);
-
-OOOPath * pAnotherPath = OOOConstruct(OOOPath, pPath, "as/well");
+char * szPath = OOOCall(pPath, getAbsolutePath);
 
 /* szPath will contain "/this/is/a/path/as/well" */
-char * szPath = OOOCall(pAnotherPath, toString);
+char * szPath = OOOCall(pAnotherPath, getAbsolutePath);
+
+/* szPath will contain "/[CURRENT_DIRCETORY]/relative" */
+char * szPath = OOOCall(pRelativePath, getAbsolutePath);
 
 OOODestroy(pPath);
+OOODestroy(pAnotherPath);
+OOODestroy(pRelativePath);
+
 ```
 
 ### To implement an OOOIFileSystem
@@ -104,7 +112,7 @@ OOODestructorEnd
 
 OOOMethod(void, createDirectory, OOOIDirectoryCreateData * iDirectoryCreateData)
 {
-    OOOPath * pPath = OOOICall(iDirectoryCreateData, getPath);
+    char * szPath = OOOICall(iDirectoryCreateData, getPath);
 
     /* TODO: create the directory at the given path */
 
@@ -115,7 +123,7 @@ OOOMethodEnd
 
 OOOMethod(void, removeDirectory, OOOIDirectoryRemoveData * iDirectoryRemoveData)
 {
-    OOOPath * pPath = OOOICall(iDirectoryRemoveData, getPath);
+    char * szPath = OOOICall(iDirectoryRemoveData, getPath);
 
     /* TODO: create the directory at the given path */
 
@@ -126,7 +134,7 @@ OOOMethodEnd
 
 OOOMethod(void, writeFile, OOOIFileWriteData * iFileWriteData)
 {
-    OOOPath * pPath = OOOICall(iFileWriteData, getPath);
+    char * szPath = OOOICall(iFileWriteData, getPath);
     unsigned char * pData = OOOICall(iFileWriteData, getData);
     size_t uSize = OOOICall(iFileWriteData, getSize);
 
@@ -141,7 +149,7 @@ OOOMethod(void, readFile, OOOIFileReadData * iFileReadData)
 {
     unsigned char * pData;
     size_t uSize;
-    OOOPath * pPath = OOOICall(iFileReadData, getPath);
+    char * szPath = OOOICall(iFileReadData, getPath);
 
     /* TODO: read the file at the given path */
 
@@ -152,7 +160,7 @@ OOOMethodEnd
 
 OOOMethod(void, removeFile, OOOIFileRemoveData * iFileRemoveData)
 {
-    OOOPath * pPath = OOOICall(iFileWriteData, getPath);
+    char * szPath = OOOICall(iFileWriteData, getPath);
 
     /* TODO: remove the file at the given path */
 
@@ -184,16 +192,11 @@ OOOConstructorEnd
 #include "OOOFileSystem.h"
 
 OOOFileSystem * pFileSystem;
-unsigned char pMyData[] =
-{
-    ...
-}
-size_t uMySize = sizeof(pMyData);
 
 /* Declare private data classes */
 
 #define OOOClass MyDirectory
-OOODeclarePrivate(OOOPath * pPath)
+OOODeclarePrivate(char * szPath)
     OOOImplements
         OOOImplement(OOOIDirectoryCreateData)
         OOOImplement(OOOIDirectoryRemoveData)
@@ -204,7 +207,7 @@ OOODeclareEnd
 #undef
 
 #define OOOClass MyFile
-OOODeclarePrivate(OOOPath * pPath, unsigned char * pData, size_t uSize)
+OOODeclarePrivate(char * szPath, unsigned char * pData, size_t uSize)
     OOOImplements
         OOOImplement(OOOIFileWriteData)
         OOOImplement(OOOIFileReadData)
@@ -216,16 +219,14 @@ OOODeclareEnd
 #undef
 
 static OOOFileSystem * pFileSystem;
-static OOOPath * pDirectoryPath;
-static OOOPath * pFilePath;
 static MyDirectory * pMyDirectory;
 static MyFile * pMyFile;
 
 static void start()
 {
     pFileSystem = OOOConstruct(OOOFileSystem);
-    pDirectoryPath = OOOConstruct(OOOPath, NULL, '/my/directory');
-    pMyDirectory = OOOConstruct(MyDirectory, pDirectoryPath);
+    pDirectoryPath = OOOConstruct(OOOPath, NULL, "/my/directory");
+    pMyDirectory = OOOConstruct(MyDirectory, OOOCall(pDirectoryPath, getAbsolutePath));
     OOODestroy(pDirectoryPath);
     OOOICall(OOOCast(OOOIFileSystem, pFileSystem), createDirectory, OOOCast(OOOIDirectoryCreateData, pMyDirectory));
 }
@@ -233,8 +234,8 @@ static void start()
 static void directoryCreated(OOOIError * iError)
 {
     assert(iError == NULL);
-    pFilePath = OOOConstruct(OOOPath, pDirectoryPath, 'my/file');
-    pMyFile = OOOConstruct(MyFile, pFilePath, (unsigned char *) "Hello, World!", O_strlen("Hello, World!") + 1);
+    pFilePath = OOOConstruct(OOOPath, pDirectoryPath, "my/file");
+    pMyFile = OOOConstruct(MyFile, OOOCall(pFilePath, getAbsolutePath), (unsigned char *) "Hello, World!", O_strlen("Hello, World!") + 1);
     OOODestroy(pFilePath);
     OOOICall(OOOCast(OOOIFileSystem, pFileSystem), writeFile, OOOCast(OOOIFileWriteData, pMyFile));
 }
@@ -272,14 +273,14 @@ static void directoryRemoved(OOOIError * iError)
 
 #define OOOClass MyDirectory
 OOOPrivateData
-    OOOPath * pPath;
+    char * szPath;
 OOOPrivateDataEnd
 
 OOODestructor
 OOODestructorEnd
 
-OOOMethod(OOOPath *, getPath)
-    return OOOF(pPath);
+OOOMethod(char *, getPath)
+    return OOOF(szPath);
 OOOMethodEnd
 
 OOOMethod(void, created, OOOIError * iError)
@@ -290,7 +291,7 @@ OOOMethod(void, removed, OOOIError * iError)
     directoryRemoved(iError);
 OOOMethodEnd
 
-OOOConstructorPrivate(OOOPath * pPath)
+OOOConstructorPrivate(char * szPath)
 #define OOOInterface OOOIDirectoryCreateData
     OOOMapVirtuals
         OOOMapVirtual(getPath)
@@ -308,13 +309,13 @@ OOOConstructorPrivate(OOOPath * pPath)
     OOOMapMethods
     OOOMapMethodsEnd
 
-    OOOF(pPath) = pPath;
+    OOOF(szPath) = szPath;
 OOOConstructorEnd
 #undef OOOClass
 
 #define OOOClass MyFile
 OOOPrivateData
-    OOOPath * pPath;
+    char * szPath;
     unsigned char * pData;
     size_t uSize;
 OOOPrivateDataEnd
@@ -322,8 +323,8 @@ OOOPrivateDataEnd
 OOODestructor
 OOODestructorEnd
 
-OOOMethod(OOOPath *, getPath)
-    return OOOF(pPath);
+OOOMethod(char *, getPath)
+    return OOOF(szPath);
 OOOMethodEnd
 
 OOOMethod(unsigned char *, getData)
@@ -346,7 +347,7 @@ OOOMethod(void, removed, OOOIError * iError)
     fileRemoved(iError);
 OOOMethodEnd
 
-OOOConstructorPrivate(OOOPath * pPath, unsigned char * pData, size_t uSize)
+OOOConstructorPrivate(char * szPath, unsigned char * pData, size_t uSize)
 #define OOOInterface OOOIFileWriteData
     OOOMapVirtuals
         OOOMapVirtual(getPath)
@@ -371,7 +372,7 @@ OOOConstructorPrivate(OOOPath * pPath, unsigned char * pData, size_t uSize)
     OOOMapMethods
     OOOMapMethodsEnd
 
-    OOOF(pPath) = pPath;
+    OOOF(szPath) = szPath;
     OOOF(pData) = pData;
     OOOF(uSize) = uSize;
 OOOConstructorEnd
@@ -407,7 +408,7 @@ Then the easiest way to work with the project in the OpenTV IDE...
 
 After you have built the projects at least once run the test application in the Virtual Set top box by...
 
-1. Choosing the **RepositoryFlow** project on the left
+1. Choosing the **FileSystemFlow** project on the left
 1. Pressing the green **Run** button at the top
 1. In the resulting dialog choose **Local OpenTV Application** and press **OK**
 
