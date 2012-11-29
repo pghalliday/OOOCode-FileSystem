@@ -63,7 +63,7 @@ char * szPath = OOOCall(pPath, getAbsolutePath);
 /* szPath will contain "/this/is/a/path/as/well" */
 char * szPath = OOOCall(pAnotherPath, getAbsolutePath);
 
-/* szPath will contain "/[CURRENT_DIRCETORY]/relative" */
+/* szPath will contain "/[CURRENT_DIRECTORY]/relative" */
 char * szPath = OOOCall(pRelativePath, getAbsolutePath);
 
 OOODestroy(pPath);
@@ -219,7 +219,9 @@ OOODeclareEnd
 #undef
 
 static OOOFileSystem * pFileSystem;
+static OOOPath * pDirectoryPath;
 static MyDirectory * pMyDirectory;
+static OOOPath * pMyFile;
 static MyFile * pMyFile;
 
 static void start()
@@ -227,7 +229,6 @@ static void start()
     pFileSystem = OOOConstruct(OOOFileSystem);
     pDirectoryPath = OOOConstruct(OOOPath, NULL, "/my/directory");
     pMyDirectory = OOOConstruct(MyDirectory, OOOCall(pDirectoryPath, getAbsolutePath));
-    OOODestroy(pDirectoryPath);
     OOOICall(OOOCast(OOOIFileSystem, pFileSystem), createDirectory, OOOCast(OOOIDirectoryCreateData, pMyDirectory));
 }
 
@@ -236,7 +237,6 @@ static void directoryCreated(OOOIError * iError)
     assert(iError == NULL);
     pFilePath = OOOConstruct(OOOPath, pDirectoryPath, "my/file");
     pMyFile = OOOConstruct(MyFile, OOOCall(pFilePath, getAbsolutePath), (unsigned char *) "Hello, World!", O_strlen("Hello, World!") + 1);
-    OOODestroy(pFilePath);
     OOOICall(OOOCast(OOOIFileSystem, pFileSystem), writeFile, OOOCast(OOOIFileWriteData, pMyFile));
 }
 
@@ -258,6 +258,7 @@ static void fileRemoved(OOOIError * iError)
     // file should have been deleted but the directory "/my/directory/my" will remain
     assert(iError == NULL);
     OOODestroy(pMyFile);
+    OOODestroy(pFilePath);
     OOOICall(OOOCast(OOOIFileSystem, pFileSystem), removeDirectory, OOOCast(OOOIDirectoryRemoveData, pMyDirectory));
 }
 
@@ -266,6 +267,7 @@ static void directoryRemoved(OOOIError * iError)
     // directory should have been deleted but the directory "/my" will remain
     assert(iError == NULL);
     OOODestroy(pMyDirectory);
+    OOODestroy(pDirectoryPath);
     OOODestroy(pFileSystem);
 }
 
