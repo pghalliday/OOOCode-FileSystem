@@ -12,7 +12,7 @@ OOODestructor
 }
 OOODestructorEnd
 
-OOOMethod(char *, toString)
+OOOMethod(char *, getAbsolutePath)
 {
 	return OOOF(szPath);
 }
@@ -21,7 +21,7 @@ OOOMethodEnd
 OOOConstructor(OOOPath * pParent, char * szPath)
 {
 	OOOMapMethods
-		OOOMapMethod(toString)
+		OOOMapMethod(getAbsolutePath)
 	OOOMapMethodsEnd
 
 	if (szPath[0] == '/')
@@ -35,7 +35,7 @@ OOOConstructor(OOOPath * pParent, char * szPath)
 		if (pParent)
 		{
 			/* szPath is relative to the given parent directory */
-			char * szParent = OOOCall(pParent, toString);
+			char * szParent = OOOCall(pParent, getAbsolutePath);
 			OOOF(szPath) = O_calloc(O_strlen(szParent) + 1 + O_strlen(szPath) + 1, sizeof(char));
 			O_strcpy(OOOF(szPath), szParent);
 		}

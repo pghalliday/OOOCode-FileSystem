@@ -6,7 +6,8 @@
 #define TEST_DIRECTORY3	"test3"
 #define TEST_DIRECTORY	TEST_DIRECTORY1 "/" TEST_DIRECTORY2 "/" TEST_DIRECTORY3
 
-#define TEST_FILE	TEST_DIRECTORY "/test"
+#define TEST_FILE		TEST_DIRECTORY "/test"
+#define INVALID_FILE	"/"
 
 void recursiveDelete(char * szPath)
 {
@@ -91,9 +92,9 @@ OOOMethod(void, created, OOOIError * iError)
 	}
 	else
 	{
-		if (!OOOCheck(iError == NULL))
+		if (iError != NULL)
 		{
-			O_debug("Error: %s\n", OOOICall(iError, toString));
+			OOOError(OOOICall(iError, toString));
 		}
 		OOOCheck(isDirectory(OOOF(szPath)));
 	}
@@ -112,9 +113,9 @@ OOOMethod(void, removed, OOOIError * iError)
 	}
 	else
 	{
-		if (!OOOCheck(iError == NULL))
+		if (iError != NULL)
 		{
-			O_debug("Error: %s\n", OOOICall(iError, toString));
+			OOOError(OOOICall(iError, toString));
 		}
 		OOOCheck(!isDirectory(OOOF(szPath)));
 	}
@@ -206,12 +207,43 @@ OOOMethod(void, written, OOOIError * iError)
 	}
 	else
 	{
-		if (!OOOCheck(iError == NULL))
+		if (iError != NULL)
 		{
-			O_debug("Error: %s\n", OOOICall(iError, toString));
+			OOOError(OOOICall(iError, toString));
 		}
 
-		/* TODO: check the contents of the written file */
+		/* check the contents of the written file */
+		{
+			o_file hFile = O_file_open(OOOF(szPath), OTV_O_RDONLY, OTV_O_NO_CREATION_MODE, 0);
+			if (OOOCheck(hFile != FAILURE))
+			{
+				ssize_t nSize = O_fh_get_length(hFile);
+				if (OOOCheck(nSize != FAILURE))
+				{
+					if (OOOCheck((size_t) nSize == OOOF(uSize)))
+					{
+						if (nSize > 0)
+						{
+							char * szContents = O_calloc(nSize, sizeof(char));
+							nSize = O_fh_read(hFile, szContents, nSize);
+							if (OOOCheck(nSize != FAILURE))
+							{
+								if (OOOCheck((size_t) nSize == OOOF(uSize)))
+								{
+									if (OOOCheck(O_strcmp(szContents, (char *) OOOF(pData)) == 0))
+									{
+										nSize = O_fh_read(hFile, szContents, nSize);
+										OOOCheck(nSize == 0);
+									}
+								}
+							}
+							O_free(szContents);
+						}
+					}
+				}
+				O_fh_close(hFile);
+			}
+		}
 	}
 	OOOF(bChecked) = TRUE;
 }
@@ -240,9 +272,9 @@ OOOMethod(void, read, OOOIError * iError, unsigned char * pData, size_t uSize)
 	}
 	else
 	{
-		if (!OOOCheck(iError == NULL))
+		if (iError != NULL)
 		{
-			O_debug("Error: %s\n", OOOICall(iError, toString));
+			OOOError(OOOICall(iError, toString));
 		}
 	}
 	OOOF(bChecked) = TRUE;
@@ -260,9 +292,9 @@ OOOMethod(void, removed, OOOIError * iError)
 	}
 	else
 	{
-		if (!OOOCheck(iError == NULL))
+		if (iError != NULL)
 		{
-			O_debug("Error: %s\n", OOOICall(iError, toString));
+			OOOError(OOOICall(iError, toString));
 		}
 
 		/* TODO: check that the file was removed */
@@ -360,13 +392,23 @@ OOOTest(OOOFileSystem)
 	removeDirectory(pFileSystem, TEST_DIRECTORY1, NULL);
 
 	/* Read should error if there is no such file */
-	readFile(pFileSystem, TEST_FILE, "No such file: " TEST_FILE, NULL, 0);
+	readFile(pFileSystem, TEST_FILE, "O_file_open failed: " TEST_FILE, NULL, 0);
 
 	/* Write should error if the data can not be written */
-	writeFile(pFileSystem, TEST_FILE, "Write failure: " TEST_FILE, NULL, 0);
+	writeFile(pFileSystem, INVALID_FILE, "Path exists and is a directory: " INVALID_FILE, NULL, 0);
 
-	/* TODO: Write should write an empty file to the file system */
+	/* Write should write an empty file to the file system, creating intermediate directories */
 	writeFile(pFileSystem, TEST_FILE, NULL, NULL, 0);
+
+	/* Read should read an empty file from the file system */
+	readFile(pFileSystem, TEST_FILE, NULL, NULL, 0);
+
+	/* Write should overwrite an existing file */
+	writeFile(pFileSystem, TEST_FILE, NULL, "Hello, World!", O_strlen("Hello, World!") + 1);
+
+	/* Read should read a non-empty file from the file system */
+	readFile(pFileSystem, TEST_FILE, NULL, "Hello, World!", O_strlen("Hello, World!") + 1);
+
 
 	/* TODO: test remove file and lots of other read and write conditions */
 	/* TODO: test directory create and remove error conditions */

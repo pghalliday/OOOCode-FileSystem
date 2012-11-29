@@ -8,7 +8,7 @@ OOODeclare(OOOPath * pParent, char * szPath)
 	OOOImplements
 	OOOImplementsEnd
 	OOOExports
-		OOOExport(char *, toString)
+		OOOExport(char *, getAbsolutePath)
 	OOOExportsEnd
 OOODeclareEnd
 #undef OOOClass
