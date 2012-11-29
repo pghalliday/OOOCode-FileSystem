@@ -342,7 +342,7 @@ OOOMethod(void, written, OOOIError * iError)
 OOOMethodEnd
 
 OOOMethod(void, read, OOOIError * iError, unsigned char * pData, size_t uSize)
-    fileRemoved(iError, pData, uSize);
+    fileRead(iError, pData, uSize);
 OOOMethodEnd
 
 OOOMethod(void, removed, OOOIError * iError)
