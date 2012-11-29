@@ -221,7 +221,7 @@ OOODeclareEnd
 static OOOFileSystem * pFileSystem;
 static OOOPath * pDirectoryPath;
 static MyDirectory * pMyDirectory;
-static OOOPath * pMyFile;
+static OOOPath * pFilePath;
 static MyFile * pMyFile;
 
 static void start()
