@@ -12,4 +12,19 @@ OOOVirtuals
 OOOVirtualsEnd
 #undef OOOInterface
 
+#define OOOIDirectoryRemoveDataClosure(CLOSURE_TYPE) \
+	OOOClosureCallbackType(CLOSURE_TYPE, OOOIError * iError) \
+	OOOClosureImplementation(OOOIDirectoryRemoveData, CLOSURE_TYPE, char * szPath) \
+		char * szPath; \
+	OOOClosurePrivateDataEnd \
+		OOOClosureMapPrivateData(char *, getPath, szPath) \
+		OOOClosureCallbackStart(removed, OOOIError * iError) \
+			OOOClosureCallbackEnd(iError) \
+	OOOClosureConstructor(OOOIDirectoryRemoveData, CLOSURE_TYPE, char * szPath) \
+		OOOClosureMapVirtual(getPath) \
+		OOOClosureMapVirtual(removed) \
+	OOOClosureMapFields(OOOIDirectoryRemoveData) \
+		OOOClosureMapField(szPath) \
+	OOOClosureMapFieldsEnd
+
 #endif
