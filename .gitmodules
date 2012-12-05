@@ -10,3 +10,6 @@
 [submodule "FileSystem/submodules/Log"]
 	path = FileSystem/submodules/Log
 	url = https://github.com/pghalliday/OOOCode-Log.git
+[submodule "FileSystem/submodules/Macros"]
+	path = FileSystem/submodules/Macros
+	url = https://github.com/pghalliday/OOOCode-Macros.git

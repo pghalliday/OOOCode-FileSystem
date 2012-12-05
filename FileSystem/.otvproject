@@ -19,13 +19,13 @@
      <com.opentv.ide.sdk.core.code_core_version value="DEFAULT"/>
      <com.opentv.ide.sdk.core.code_link_stacksize value="1024"/>
      <com.opentv.ide.sdk.core.code_compile_macros value=""/>
-     <com.opentv.ide.sdk.core.code_compile value="COMPILER_INCLUDES2 +=  -I&quot;../src&quot; -I&quot;../Test&quot; -I&quot;../Test/src&quot; -I&quot;../submodules/OOOCode/OOOCode/src&quot; -I&quot;../submodules/UnitTest/UnitTest/src&quot; -I&quot;../submodules/Log/Log/src&quot; -I&quot;../submodules/Error/Error/src&quot;   -O1 $(WARNINGS)"/>
+     <com.opentv.ide.sdk.core.code_compile value="COMPILER_INCLUDES2 +=  -I&quot;../src&quot; -I&quot;../Test&quot; -I&quot;../Test/src&quot; -I&quot;../submodules/OOOCode/OOOCode/src&quot; -I&quot;../submodules/UnitTest/UnitTest/src&quot; -I&quot;../submodules/Log/Log/src&quot; -I&quot;../submodules/Error/Error/src&quot; -I&quot;../submodules/Macros/Macros/src&quot;   -O1 $(WARNINGS)"/>
      <com.opentv.ide.sdk.core.graphAlpha value=""/>
-     <com.opentv.ide.sdk.core.res_include value="RC_INCLUDES2 +=  -I&quot;../src&quot; -I&quot;../Test&quot; -I&quot;../Test/src&quot; -I&quot;../submodules/OOOCode/OOOCode/src&quot; -I&quot;../submodules/UnitTest/UnitTest/src&quot; -I&quot;../submodules/Log/Log/src&quot; -I&quot;../submodules/Error/Error/src&quot; "/>
+     <com.opentv.ide.sdk.core.res_include value="RC_INCLUDES2 +=  -I&quot;../src&quot; -I&quot;../Test&quot; -I&quot;../Test/src&quot; -I&quot;../submodules/OOOCode/OOOCode/src&quot; -I&quot;../submodules/UnitTest/UnitTest/src&quot; -I&quot;../submodules/Log/Log/src&quot; -I&quot;../submodules/Error/Error/src&quot; -I&quot;../submodules/Macros/Macros/src&quot; "/>
      <com.opentv.ide.sdk.core.code_compile_bigcode value=""/>
-     <com.opentv.ide.sdk.core.code_compile_includes value="../src, ../Test, ../Test/src, ../submodules/OOOCode/OOOCode/src, ../submodules/UnitTest/UnitTest/src, ../submodules/Log/Log/src, ../submodules/Error/Error/src"/>
-     <com.opentv.ide.sdk.core.isResourceTypeIdAllowDuplicate value=""/>
+     <com.opentv.ide.sdk.core.code_compile_includes value="../src, ../Test, ../Test/src, ../submodules/OOOCode/OOOCode/src, ../submodules/UnitTest/UnitTest/src, ../submodules/Log/Log/src, ../submodules/Error/Error/src, ../submodules/Macros/Macros/src"/>
      <com.opentv.ide.sdk.core.graphBitDepth value="4"/>
+     <com.opentv.ide.sdk.core.isResourceTypeIdAllowDuplicate value=""/>
      <com.opentv.ide.sdk.core.code_compile_bigdata value=""/>
      <com.opentv.ide.sdk.core.graphjpgDataStructure value="static"/>
      <com.opentv.ide.sdk.core.graphjpgExtraArgs value=""/>
