@@ -1,5 +1,3 @@
-#include "OOOIFileReadData.h"
-
 #define OOOClosureInterface OOOIFileReadData
 #define OOOClosureInputs char *
 #define OOOClosureOutputs OOOIError *, unsigned char *, size_t
