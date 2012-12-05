@@ -1,18 +1,17 @@
 #include "OOOUnitTestDefines.h"
 #include "OOOError.h"
-#include "OOOIFileReadData.h"
+#include "OOOIDirectoryCreateData.h"
 
 #define TEST_CLOSURE_DATA	"This is a test"
 #define TEST_PATH			"This is a test path"
 #define TEST_ERROR			"This is a test error"
-#define TEST_DATA			"This is test data"
 
 #define OOOClass TestTarget
 OOODeclarePrivate()
 	OOOImplements
 	OOOImplementsEnd
 	OOOExports
-		OOOExport(void, close, OOOIFileReadData * iFileReadData)
+		OOOExport(void, close, OOOIDirectoryCreateData * iDirectoryCreateData)
 	OOOExportsEnd
 OOODeclareEnd
 
@@ -22,15 +21,15 @@ OOOPrivateDataEnd
 OOODestructor
 OOODestructorEnd
 
-OOOMethod(void, close, OOOIFileReadData * iFileReadData)
+OOOMethod(void, close, OOOIDirectoryCreateData * iDirectoryCreateData)
 {
-	char * szPath = OOOICall(iFileReadData, getPath);
+	char * szPath = OOOICall(iDirectoryCreateData, getPath);
 	OOOError * pError = OOOConstruct(OOOError, TEST_ERROR);
 	if (O_strcmp(szPath, TEST_PATH) != 0)
 	{
 		OOOError("Expected: %s: Received: %s", TEST_PATH, szPath);
 	}
-	OOOICall(iFileReadData, read, OOOCast(OOOIError, pError), (unsigned char *) TEST_DATA, O_strlen(TEST_DATA) + 1);
+	OOOICall(iDirectoryCreateData, created, OOOCast(OOOIError, pError));
 	OOODestroy(pError);
 }
 OOOMethodEnd
@@ -56,7 +55,7 @@ OOODeclareEnd
 // declare the test closure class
 #define OOOClosure TestClosure
 #define OOOClosureType char *
-#include "OOOFileReadClosure.h"
+#include "OOODirectoryCreateClosure.h"
 #undef OOOClosureType
 #undef OOOClosure
 
@@ -71,7 +70,7 @@ OOODestructor
 }
 OOODestructorEnd
 
-OOOMethod(void, read, char * szClosureData, OOOIError * iError, unsigned char * pData, size_t uSize)
+OOOMethod(void, created, char * szClosureData, OOOIError * iError)
 {
 	char * szError = OOOICall(iError, toString);
 	if (O_strcmp(szClosureData, TEST_CLOSURE_DATA) != 0)
@@ -82,11 +81,6 @@ OOOMethod(void, read, char * szClosureData, OOOIError * iError, unsigned char * 
 	{
 		OOOError("Expected: %s: Received: %s", TEST_ERROR, szError);
 	}
-	if (O_strcmp((char *) pData, TEST_DATA) != 0)
-	{
-		OOOError("Expected: %s: Received: %s", TEST_DATA, (char *) pData);
-	}
-	OOOCheck(uSize == O_strlen(TEST_DATA) + 1);
 	OOOF(bChecked) = TRUE;
 }
 OOOMethodEnd
@@ -96,11 +90,11 @@ OOOMethod(void, start)
 	TestClosure * pClosure = OOOClosureConstruct
 	(
 		TestClosure,
-		read,
+		created,
 		TEST_CLOSURE_DATA,
 		TEST_PATH
 	);
-	OOOCall(OOOF(pTestTarget), close, OOOCast(OOOIFileReadData, pClosure));
+	OOOCall(OOOF(pTestTarget), close, OOOCast(OOOIDirectoryCreateData, pClosure));
 	OOOCheck(OOOF(bChecked));
 }
 OOOMethodEnd
@@ -116,7 +110,7 @@ OOOConstructorPrivate()
 OOOConstructorEnd
 #undef OOOClass
 
-OOOTest(OOOFileReadClosure)
+OOOTest(OOODirectoryCreateClosure)
 {
 	Test * pTest = OOOConstruct(Test);
 	OOOCall(pTest, start);

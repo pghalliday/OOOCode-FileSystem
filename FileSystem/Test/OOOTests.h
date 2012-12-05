@@ -1,3 +1,7 @@
 #include "OOOPath.Test.h"
 #include "OOOFileSystem.Test.h"
 #include "OOOFileReadClosure.Test.h"
+#include "OOOFileWriteClosure.Test.h"
+#include "OOOFileRemoveClosure.Test.h"
+#include "OOODirectoryCreateClosure.Test.h"
+#include "OOODirectoryRemoveClosure.Test.h"
